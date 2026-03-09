@@ -1,0 +1,19 @@
+server:
+  port: 8085
+spring:
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: nithika151@gmail.com
+    password: enxmsnsomcagxwrz
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+services:
+  identity-url: ${IDENTITY_SERVICE_URL:https://user-identity-service.onrender.com}
+  order-url: ${ORDER_SERVICE_URL:https://order-service-production-5615.up.railway.app}
+  payment-url: ${PAYMENT_SERVICE_URL:https://food-order-payment-service-production.up.railway.app}
