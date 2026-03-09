@@ -1,5 +1,8 @@
 server:
-  port: 8085
+  port: 8086
+
+sendgrid:
+  api-key: ${SENDGRID_API_KEY:dummy-key}
 
 spring:
   mail:
