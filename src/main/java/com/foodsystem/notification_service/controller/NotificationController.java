@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/v1/notify") // Base Path
+@CrossOrigin(origins = "*") // Allow CORS for all origins
 public class NotificationController {
 
     @Autowired
