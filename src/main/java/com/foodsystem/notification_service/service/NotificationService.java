@@ -82,7 +82,7 @@ public class NotificationService {
         }
     }
 
-    public void sendWelcomeEmail(Long userId) {
+    public void sendWelcomeEmail(String userId) {
         try {
             // 1. Fetch User Data from your Identity Service on Render
             String userUrl = identityUrl + "/api/users/" + userId;

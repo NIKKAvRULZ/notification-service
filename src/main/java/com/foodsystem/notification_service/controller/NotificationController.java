@@ -8,8 +8,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/api/v1/notify") // Base Path
-@CrossOrigin(origins = "*") // Allow CORS for all origins
+@RequestMapping("/api/v1/notify")
+@CrossOrigin(origins = "*")
 public class NotificationController {
 
     @Autowired
@@ -22,9 +22,9 @@ public class NotificationController {
         return ResponseEntity.ok("Handshake Successful: Integration email sent.");
     }
 
-    // NEW Welcome Email Endpoint
+    // UPDATED: Welcome Email Endpoint (Changed Long to String)
     @GetMapping("/welcome/{userId}")
-    public String sendWelcome(@PathVariable Long userId) {
+    public String sendWelcome(@PathVariable String userId) { // Change this to String
         notificationService.sendWelcomeEmail(userId);
         return "Welcome email triggered for user " + userId;
     }
