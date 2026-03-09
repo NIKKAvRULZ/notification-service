@@ -6,7 +6,7 @@ spring:
     host: smtp.gmail.com
     port: 465 # Switch to SSL port for Railway
     username: nithika151@gmail.com
-    password: enxmsnsomcagxwrz
+    password: enxmsnsomcagxwrz # Your 16-character App Password
     properties:
       mail:
         smtp:
