@@ -50,43 +50,37 @@ public class NotificationService {
     }
 
     private void sendMeaningfulEmail(UserDTO user, PaymentDTO payment, String orderId) {
-        try {
-            System.out.println("Attempting to send API mail to: " + user.getEmail());
-            
-            Email from = new Email(senderEmail);
-            String subject = "Gourmet Express - Order Update #" + orderId;
-            Email to = new Email(user.getEmail());
-            
-            String htmlContent = "<html><body style='font-family: Arial, sans-serif; color: #333;'>" +
-                "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd;'>" +
-                "<h1 style='color: #d9534f;'>Gourmet Express</h1>" +
-                "<p>Hello <b>" + user.getUsername() + "</b>,</p>" +
-                "<p>Your payment was <b>" + payment.getStatus().toUpperCase() + "</b>. Here are your order details:</p>" +
-                "<p><b>Total Paid:</b> LKR " + payment.getAmount() + "</p>" +
-                "<p><b>Delivery Address:</b> " + user.getDeliveryAddress() + "</p>" +
-                "<hr><p style='font-size: 12px; color: #777;'>Sent via SendGrid Cloud API</p>" +
-                "</div></body></html>";
+    try {
+        // Must match the verified sender in your screenshot
+        Email from = new Email("it22061348@my.sliit.lk"); 
+        String subject = "Gourmet Express - Order Update #" + orderId;
+        Email to = new Email(user.getEmail());
+        
+        String htmlContent = "<h1>Order Confirmed</h1>" +
+                             "<p>Hello " + user.getUsername() + ", your payment of LKR " + 
+                             payment.getAmount() + " was processed successfully.</p>";
+        Content content = new Content("text/html", htmlContent);
+        Mail mail = new Mail(from, subject, to, content);
 
-            Content content = new Content("text/html", htmlContent);
-            Mail mail = new Mail(from, subject, to, content);
+        SendGrid sg = new SendGrid(sendGridApiKey);
+        Request request = new Request();
+        request.setMethod(Method.POST);
+        request.setEndpoint("mail/send");
+        request.setBody(mail.build());
 
-            SendGrid sg = new SendGrid(sendGridApiKey);
-            Request request = new Request();
-            
-            request.setMethod(Method.POST);
-            request.setEndpoint("mail/send");
-            request.setBody(mail.build());
-            
-            Response apiResponse = sg.api(request);
-            System.out.println("SendGrid Status: " + apiResponse.getStatusCode());
-            System.out.println("SUCCESS: Email delivered via Cloud API!");
-
-        } catch (IOException e) {
-            System.err.println("SendGrid API Error: " + e.getMessage());
-            // Failover log for Viva
-            System.out.println("Handshake Verified for user: " + user.getUsername() + " with amount LKR " + payment.getAmount());
+        Response apiResponse = sg.api(request);
+        
+        // Log status and body for your project report
+        System.out.println("SendGrid API Status: " + apiResponse.getStatusCode());
+        if (apiResponse.getStatusCode() == 202) {
+            System.out.println("SUCCESS: Email queued for delivery!");
+        } else {
+            System.err.println("SendGrid Error Body: " + apiResponse.getBody());
         }
+    } catch (IOException e) {
+        System.err.println("API Connection Error: " + e.getMessage());
     }
+}
 
     public void sendWelcomeEmail(Long userId) {
         try {
