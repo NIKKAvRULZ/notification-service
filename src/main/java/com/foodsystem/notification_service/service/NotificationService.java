@@ -50,37 +50,37 @@ public class NotificationService {
     }
 
     private void sendMeaningfulEmail(UserDTO user, PaymentDTO payment, String orderId) {
-    try {
-        // Must match the verified sender in your screenshot
-        Email from = new Email("it22061348@my.sliit.lk"); 
-        String subject = "Gourmet Express - Order Update #" + orderId;
-        Email to = new Email(user.getEmail());
-        
-        String htmlContent = "<h1>Order Confirmed</h1>" +
-                             "<p>Hello " + user.getUsername() + ", your payment of LKR " + 
-                             payment.getAmount() + " was processed successfully.</p>";
-        Content content = new Content("text/html", htmlContent);
-        Mail mail = new Mail(from, subject, to, content);
+        try {
+            // Must match the verified sender in your screenshot
+            Email from = new Email("it22061348@my.sliit.lk"); 
+            String subject = "Gourmet Express - Order Update #" + orderId;
+            Email to = new Email(user.getEmail());
+            
+            String htmlContent = "<h1>Order Confirmed</h1>" +
+                                "<p>Hello " + user.getUsername() + ", your payment of LKR " + 
+                                payment.getAmount() + " was processed successfully.</p>";
+            Content content = new Content("text/html", htmlContent);
+            Mail mail = new Mail(from, subject, to, content);
 
-        SendGrid sg = new SendGrid(sendGridApiKey);
-        Request request = new Request();
-        request.setMethod(Method.POST);
-        request.setEndpoint("mail/send");
-        request.setBody(mail.build());
+            SendGrid sg = new SendGrid(sendGridApiKey);
+            Request request = new Request();
+            request.setMethod(Method.POST);
+            request.setEndpoint("mail/send");
+            request.setBody(mail.build());
 
-        Response apiResponse = sg.api(request);
-        
-        // Log status and body for your project report
-        System.out.println("SendGrid API Status: " + apiResponse.getStatusCode());
-        if (apiResponse.getStatusCode() == 202) {
-            System.out.println("SUCCESS: Email queued for delivery!");
-        } else {
-            System.err.println("SendGrid Error Body: " + apiResponse.getBody());
+            Response apiResponse = sg.api(request);
+            
+            // Log status and body for your project report
+            System.out.println("SendGrid API Status: " + apiResponse.getStatusCode());
+            if (apiResponse.getStatusCode() == 202) {
+                System.out.println("SUCCESS: Email queued for delivery!");
+            } else {
+                System.err.println("SendGrid Error Body: " + apiResponse.getBody());
+            }
+        } catch (IOException e) {
+            System.err.println("API Connection Error: " + e.getMessage());
         }
-    } catch (IOException e) {
-        System.err.println("API Connection Error: " + e.getMessage());
     }
-}
 
     public void sendWelcomeEmail(Long userId) {
         try {
