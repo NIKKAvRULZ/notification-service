@@ -89,28 +89,24 @@ public class NotificationService {
             UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
 
             if (user != null) {
-                System.out.println("Triggering Welcome Email for: " + user.getEmail());
-                
-                // 2. Configure SendGrid API request
-                // Use the verified SLIIT email from your screenshot
-                Email from = new Email("it22061348@my.sliit.lk"); 
-                String subject = "Welcome to Gourmet Express, " + user.getUsername() + "!";
+                // 2. Prepare SendGrid API Objects
+                Email from = new Email("it22061348@my.sliit.lk"); // Must match your verified sender
                 Email to = new Email(user.getEmail());
+                String subject = "Welcome to Gourmet Express, " + user.getUsername() + "!";
 
-                // 3. Create professional Welcome HTML content
-                String htmlBody = "<html><body style='font-family: Arial, sans-serif;'>" +
+                String htmlContent = "<html><body style='font-family: Arial, sans-serif;'>" +
                     "<div style='background-color: #ffffff; padding: 30px; border: 1px solid #eee; border-radius: 15px;'>" +
                     "<h1 style='color: #d9534f;'>Welcome to the Family!</h1>" +
                     "<p>Hi <b>" + user.getUsername() + "</b>,</p>" +
-                    "<p>Thank you for joining <b>Gourmet Express</b>. Your account is now active!</p>" +
-                    "<p><b>Delivery Address:</b> " + user.getDeliveryAddress() + "</p>" +
-                    "<hr><p style='font-size: 12px; color: #888;'>Handshake Verified via Render-Railway Integration</p>" +
+                    "<p>Thank you for registering. Your account is now active!</p>" +
+                    "<p><b>Login Email:</b> " + user.getEmail() + "</p>" +
+                    "<hr><p style='font-size: 12px; color: #888;'>Gourmet Express Cloud Notification System</p>" +
                     "</div></body></html>";
 
-                Content content = new Content("text/html", htmlBody);
+                Content content = new Content("text/html", htmlContent);
                 Mail mail = new Mail(from, subject, to, content);
 
-                // 4. Execute the API Call
+                // 3. Execute API Request via Port 443
                 SendGrid sg = new SendGrid(sendGridApiKey);
                 Request request = new Request();
                 request.setMethod(Method.POST);

@@ -23,10 +23,9 @@ public class NotificationController {
     }
 
     // NEW Welcome Email Endpoint
-    @PostMapping("/welcome") // Full path: /api/v1/notify/welcome
-    @Operation(summary = "INTEGRATION: Send a welcome email to a newly registered user")
-    public ResponseEntity<String> sendWelcome(@RequestBody NotificationRequest request) {
-        notificationService.sendWelcomeEmail(request.getUserId());
-        return ResponseEntity.ok("Welcome email handshake successful.");
+    @GetMapping("/welcome/{userId}")
+    public String sendWelcome(@PathVariable Long userId) {
+        notificationService.sendWelcomeEmail(userId);
+        return "Welcome email triggered for user " + userId;
     }
 }
