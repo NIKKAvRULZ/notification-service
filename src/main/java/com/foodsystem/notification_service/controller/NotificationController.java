@@ -28,4 +28,10 @@ public class NotificationController {
         notificationService.sendWelcomeEmail(userId);
         return "Welcome email triggered for user " + userId;
     }
+
+    // Ping endpoint for keep-alive (cron-job.org)
+    @GetMapping("/ping")
+    public ResponseEntity<String> ping() {
+        return ResponseEntity.ok("Service is awake!");
+    }
 }
