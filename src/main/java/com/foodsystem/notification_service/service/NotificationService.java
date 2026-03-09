@@ -84,21 +84,41 @@ public class NotificationService {
 
     public void sendWelcomeEmail(Long userId) {
         try {
+            // 1. Fetch User Data from your Identity Service on Render
             String userUrl = identityUrl + "/api/users/" + userId;
             UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
 
             if (user != null) {
-                Email from = new Email(senderEmail);
+                System.out.println("Triggering Welcome Email for: " + user.getEmail());
+                
+                // 2. Configure SendGrid API request
+                // Use the verified SLIIT email from your screenshot
+                Email from = new Email("it22061348@my.sliit.lk"); 
+                String subject = "Welcome to Gourmet Express, " + user.getUsername() + "!";
                 Email to = new Email(user.getEmail());
-                Content content = new Content("text/plain", "Welcome to Gourmet Express, " + user.getUsername() + "!");
-                Mail mail = new Mail(from, "Welcome!", to, content);
 
+                // 3. Create professional Welcome HTML content
+                String htmlBody = "<html><body style='font-family: Arial, sans-serif;'>" +
+                    "<div style='background-color: #ffffff; padding: 30px; border: 1px solid #eee; border-radius: 15px;'>" +
+                    "<h1 style='color: #d9534f;'>Welcome to the Family!</h1>" +
+                    "<p>Hi <b>" + user.getUsername() + "</b>,</p>" +
+                    "<p>Thank you for joining <b>Gourmet Express</b>. Your account is now active!</p>" +
+                    "<p><b>Delivery Address:</b> " + user.getDeliveryAddress() + "</p>" +
+                    "<hr><p style='font-size: 12px; color: #888;'>Handshake Verified via Render-Railway Integration</p>" +
+                    "</div></body></html>";
+
+                Content content = new Content("text/html", htmlBody);
+                Mail mail = new Mail(from, subject, to, content);
+
+                // 4. Execute the API Call
                 SendGrid sg = new SendGrid(sendGridApiKey);
                 Request request = new Request();
                 request.setMethod(Method.POST);
                 request.setEndpoint("mail/send");
                 request.setBody(mail.build());
-                sg.api(request);
+
+                Response response = sg.api(request);
+                System.out.println("Welcome Email Status: " + response.getStatusCode());
             }
         } catch (Exception e) {
             System.err.println("Welcome Email API Error: " + e.getMessage());
