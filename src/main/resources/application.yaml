@@ -4,18 +4,24 @@ server:
 spring:
   mail:
     host: smtp.gmail.com
-    port: 465 # Switch to SSL port for Railway
+    port: 465
     username: nithika151@gmail.com
-    password: enxmsnsomcagxwrz # Your 16-character App Password
+    password: enxmsnsomcagxwrz
     properties:
       mail:
         smtp:
           auth: true
-          starttls:
-            enable: false # Disable StartTLS when using Port 465
+          ssl:
+            enable: true
+            trust: smtp.gmail.com
+          # STOP THE HANGING: 5-second timeouts
+          connectiontimeout: 5000
+          timeout: 5000
+          writetimeout: 5000
           socketFactory:
             port: 465
-            class: javax.net.ssl.SSLSocketFactory # Forces SSL connection
+            class: javax.net.ssl.SSLSocketFactory
+            fallback: false
 
 services:
   identity-url: ${IDENTITY_SERVICE_URL:https://user-identity-service.onrender.com}

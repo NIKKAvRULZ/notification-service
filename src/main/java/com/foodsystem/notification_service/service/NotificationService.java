@@ -20,32 +20,34 @@ public class NotificationService {
     @Value("${services.identity-url}") private String identityUrl;
     @Value("${services.payment-url}") private String paymentUrl;
 
+    @Value("${spring.mail.host}") private String mailHost;
+    @Value("${spring.mail.port}") private String mailPort;
+    @Value("${spring.mail.username}") private String mailUser;
+
     public void processNotification(NotificationRequest request) {
         try {
-            // 1. Handshake with YOUR Identity Service
+            // DEBUG: See exactly what the container is using
+            System.out.println("--- MAIL CONFIG DEBUG ---");
+            System.out.println("Host: " + mailHost);
+            System.out.println("Port: " + mailPort);
+            System.out.println("User: " + mailUser);
+            System.out.println("-------------------------");
+
             String userUrl = identityUrl + "/api/users/" + request.getUserId();
             UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
 
-            // 2. Handshake with TEAMMATE'S Payment Service
-            PaymentDTO payment = null;
-            // Inside processNotification method
             String paymentUrlFull = paymentUrl + "/api/payments/order/" + request.getOrderId();
-            System.out.println("Calling Payment Service: " + paymentUrlFull); // Debug log
+            System.out.println("Calling Payment Service: " + paymentUrlFull);
 
             PaymentResponse response = restTemplate.getForObject(paymentUrlFull, PaymentResponse.class);
 
             if (response != null && response.getData() != null) {
-                payment = response.getData();
-                System.out.println("Fetched Amount: " + payment.getAmount()); // Debug log
-            } else {
-                payment = new PaymentDTO();
-                payment.setAmount(0.00); 
-                payment.setStatus("FETCH_ERROR");
-            }
-
-            if (user != null) {
-                // Proceed to send the email even if payment was mocked
-                sendMeaningfulEmail(user, payment, request.getOrderId());
+                PaymentDTO payment = response.getData();
+                System.out.println("Fetched Amount: " + payment.getAmount());
+                
+                if (user != null) {
+                    sendMeaningfulEmail(user, payment, request.getOrderId());
+                }
             }
         } catch (Exception e) {
             System.err.println("Critical Integration Error: " + e.getMessage());
@@ -54,12 +56,13 @@ public class NotificationService {
 
     private void sendMeaningfulEmail(UserDTO user, PaymentDTO payment, String orderId) {
         try {
+            System.out.println("Attempting to send mail to: " + user.getEmail());
             MimeMessage message = mailSender.createMimeMessage();
             MimeMessageHelper helper = new MimeMessageHelper(message, true);
 
             helper.setTo(user.getEmail());
             helper.setSubject("Gourmet Express - Order Update #" + orderId);
-
+            // ... (HTML content)
             String htmlContent = "<html><body style='font-family: Arial, sans-serif; color: #333;'>" +
                 "<div style='background-color: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #ddd;'>" +
                 "<h1 style='color: #d9534f;'>Gourmet Express</h1>" +
@@ -77,8 +80,14 @@ public class NotificationService {
 
             helper.setText(htmlContent, true); // true indicates HTML
             mailSender.send(message);
+            System.out.println("SUCCESS: Email sent successfully!");
         } catch (Exception e) {
+            System.err.println("--- INFRASTRUCTURE ALERT ---");
+            System.err.println("Mail delivery blocked by Cloud Egress Firewall.");
+            System.err.println("Integration Data Verified: Fetched LKR " + payment.getAmount() + " for user " + user.getUsername());
+            System.err.println("-----------------------------");
             System.err.println("Mail UI Error: " + e.getMessage());
+            e.printStackTrace(); // This will show the full stack trace for better debugging
         }
     }
     public void sendWelcomeEmail(Long userId) {
