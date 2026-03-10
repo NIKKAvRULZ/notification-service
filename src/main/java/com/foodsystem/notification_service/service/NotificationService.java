@@ -28,6 +28,8 @@ public class NotificationService {
     private String identityUrl;
     @Value("${services.payment-url}")
     private String paymentUrl;
+    @Value("${services.order-url}")
+    private String orderUrl;
 
     public void processNotification(NotificationRequest request) {
         try {
@@ -44,7 +46,17 @@ public class NotificationService {
                 System.out.println("Fetched Amount: " + payment.getAmount());
 
                 if (user != null) {
-                    sendMeaningfulEmail(user, payment, request.getOrderId());
+                    java.util.Map<String, Object> orderDetails = null;
+                    try {
+                        String cleanOrderUrl = orderUrl.endsWith("/") ? orderUrl.substring(0, orderUrl.length() - 1)
+                                : orderUrl;
+                        String orderInfoUrl = cleanOrderUrl + "/orders/" + request.getOrderId();
+                        System.out.println("Calling Order Service: " + orderInfoUrl);
+                        orderDetails = restTemplate.getForObject(orderInfoUrl, java.util.Map.class);
+                    } catch (Exception ex) {
+                        System.err.println("Could not fetch full order details: " + ex.getMessage());
+                    }
+                    sendMeaningfulEmail(user, payment, request.getOrderId(), orderDetails);
                 }
             }
         } catch (Exception e) {
@@ -52,18 +64,68 @@ public class NotificationService {
         }
     }
 
-    private void sendMeaningfulEmail(UserDTO user, PaymentDTO payment, String orderId) {
+    private void sendMeaningfulEmail(UserDTO user, PaymentDTO payment, String orderId,
+            java.util.Map<String, Object> orderDetails) {
         try {
             // Must match the verified sender in your screenshot
             Email from = new Email("it22061348@my.sliit.lk");
-            String subject = "Gourmet Express - Order Update #" + orderId;
+            String subject = "Gourmet Express - Order Confirmation #" + orderId;
             Email to = new Email("nithika151@gmail.com"); // Hardcoded to your email to prevent bouncing
 
-            String htmlContent = "<h1>Order Confirmed</h1>" +
-                    "<p>Hello " + user.getUsername() + ", your payment of LKR " +
-                    payment.getAmount() + " was processed successfully.</p>" +
-                    "<br><p style='color: red;'><i>(Demo Mode - Original intended recipient: " + user.getEmail() + ")</i></p>";
-            Content content = new Content("text/html", htmlContent);
+            StringBuilder htmlContent = new StringBuilder();
+            htmlContent.append(
+                    "<html><body style='font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;'>");
+            htmlContent.append(
+                    "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>");
+            htmlContent.append(
+                    "<div style='text-align: center; border-bottom: 2px solid #ff4757; padding-bottom: 20px; margin-bottom: 20px;'>");
+            htmlContent.append("<h1 style='color: #ff4757; margin: 0;'>Gourmet Express</h1>");
+            htmlContent.append("<h3 style='color: #555; margin-top: 5px;'>Order Receipt</h3>");
+            htmlContent.append("</div>");
+
+            htmlContent.append("<p style='font-size: 16px; color: #333;'>Hello <b>").append(user.getUsername())
+                    .append("</b>,</p>");
+            htmlContent.append(
+                    "<p style='font-size: 15px; color: #555;'>Great news! Your payment was successfully processed and your delicious food is being prepared.</p>");
+
+            htmlContent.append(
+                    "<div style='background-color: #f1f2f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>");
+            htmlContent.append(
+                    "<h4 style='margin-top: 0; color: #2f3542; border-bottom: 1px solid #dfe4ea; padding-bottom: 10px;'>Transaction Details</h4>");
+            htmlContent.append("<p style='margin: 5px 0;'><b>Order Number:</b> #").append(orderId).append("</p>");
+            htmlContent.append("<p style='margin: 5px 0;'><b>Amount Paid:</b> LKR ").append(payment.getAmount())
+                    .append("</p>");
+            htmlContent.append("<p style='margin: 5px 0;'><b>Delivery Address:</b> ")
+                    .append(user.getDeliveryAddress() != null ? user.getDeliveryAddress() : "Address on File")
+                    .append("</p>");
+            htmlContent.append("</div>");
+
+            if (orderDetails != null && !orderDetails.isEmpty()) {
+                htmlContent.append(
+                        "<div style='background-color: #f1f2f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>");
+                htmlContent.append(
+                        "<h4 style='margin-top: 0; color: #2f3542; border-bottom: 1px solid #dfe4ea; padding-bottom: 10px;'>Order Summary</h4>");
+                htmlContent.append("<table style='width: 100%; border-collapse: collapse;'>");
+                for (java.util.Map.Entry<String, Object> entry : orderDetails.entrySet()) {
+                    htmlContent.append("<tr>");
+                    htmlContent.append("<td style='padding: 8px 0; color: #555; border-bottom: 1px solid #eee;'><b>")
+                            .append(entry.getKey()).append(":</b></td>");
+                    htmlContent.append(
+                            "<td style='padding: 8px 0; color: #333; text-align: right; border-bottom: 1px solid #eee;'>")
+                            .append(entry.getValue()).append("</td>");
+                    htmlContent.append("</tr>");
+                }
+                htmlContent.append("</table>");
+                htmlContent.append("</div>");
+            }
+
+            htmlContent.append("<br><div style='text-align: center; margin-top: 30px;'>");
+            htmlContent.append("<p style='color: red; font-size: 13px;'><i>(Demo Mode - Original intended recipient: ")
+                    .append(user.getEmail()).append(")</i></p>");
+            htmlContent.append("</div>");
+            htmlContent.append("</div></body></html>");
+
+            Content content = new Content("text/html", htmlContent.toString());
             Mail mail = new Mail(from, subject, to, content);
 
             SendGrid sg = new SendGrid(sendGridApiKey);
@@ -89,7 +151,8 @@ public class NotificationService {
     public String sendWelcomeEmail(String userId) {
         try {
             // 1. Fetch User Data from your Identity Service on Render
-            String cleanIdentityUrl = identityUrl.endsWith("/") ? identityUrl.substring(0, identityUrl.length() - 1) : identityUrl;
+            String cleanIdentityUrl = identityUrl.endsWith("/") ? identityUrl.substring(0, identityUrl.length() - 1)
+                    : identityUrl;
             String userUrl = cleanIdentityUrl + "/api/users/" + userId;
             UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
 
@@ -106,7 +169,8 @@ public class NotificationService {
                         "<p>Hi <b>" + user.getUsername() + "</b>,</p>" +
                         "<p>Thank you for registering. Your account is now active!</p>" +
                         "<p><b>Login Email:</b> " + user.getEmail() + "</p>" +
-                        "<br><p style='color: red;'><i>(Demo Mode - This email was originally intended for: " + user.getEmail() + ")</i></p>" +
+                        "<br><p style='color: red;'><i>(Demo Mode - This email was originally intended for: "
+                        + user.getEmail() + ")</i></p>" +
                         "<hr><p style='font-size: 12px; color: #888;'>Gourmet Express Cloud Notification System</p>" +
                         "</div></body></html>";
 
