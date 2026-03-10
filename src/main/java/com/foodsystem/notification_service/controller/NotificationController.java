@@ -2,7 +2,6 @@ package com.foodsystem.notification_service.controller;
 
 import com.foodsystem.notification_service.dto.NotificationRequest;
 import com.foodsystem.notification_service.service.NotificationService;
-import io.swagger.v3.oas.annotations.Operation;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -22,11 +21,15 @@ public class NotificationController {
         return ResponseEntity.ok("Handshake Successful: Integration email sent.");
     }
 
-    // UPDATED: Welcome Email Endpoint (Changed Long to String)
+    // UPDATED: Welcome Email Endpoint
     @GetMapping("/welcome/{userId}")
-    public String sendWelcome(@PathVariable String userId) { // Change this to String
-        notificationService.sendWelcomeEmail(userId);
-        return "Welcome email triggered for user " + userId;
+    public ResponseEntity<String> sendWelcome(@PathVariable String userId) {
+        try {
+            String result = notificationService.sendWelcomeEmail(userId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed: " + e.getMessage());
+        }
     }
 
     // Ping endpoint for keep-alive (cron-job.org)

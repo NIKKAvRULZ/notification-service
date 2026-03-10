@@ -3,7 +3,7 @@ server:
   forward-headers-strategy: framework
 
 sendgrid:
-  api-key: ${SENDGRID_API_KEY:dummy-key}
+  api-key: ${SENDGRID_API_KEY}
 
 spring:
   mail:

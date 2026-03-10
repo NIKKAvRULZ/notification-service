@@ -85,10 +85,11 @@ public class NotificationService {
         }
     }
 
-    public void sendWelcomeEmail(String userId) {
+    public String sendWelcomeEmail(String userId) {
         try {
             // 1. Fetch User Data from your Identity Service on Render
-            String userUrl = identityUrl + "/api/users/" + userId;
+            String cleanIdentityUrl = identityUrl.endsWith("/") ? identityUrl.substring(0, identityUrl.length() - 1) : identityUrl;
+            String userUrl = cleanIdentityUrl + "/api/users/" + userId;
             UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
 
             if (user != null) {
@@ -118,10 +119,12 @@ public class NotificationService {
                 request.setBody(mail.build());
 
                 Response response = sg.api(request);
-                System.out.println("Welcome Email Status: " + response.getStatusCode());
+                return "SendGrid Status: " + response.getStatusCode() + " - Body: " + response.getBody();
+            } else {
+                return "User fetch returned null for ID: " + userId;
             }
         } catch (Exception e) {
-            System.err.println("Welcome Email API Error: " + e.getMessage());
+            throw new RuntimeException("Welcome Email API Error: " + e.getMessage());
         }
     }
 }

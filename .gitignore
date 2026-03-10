@@ -34,3 +34,4 @@ target/
 .git
 .gitignore
 .m2
+.env
