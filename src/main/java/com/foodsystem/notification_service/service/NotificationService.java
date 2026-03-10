@@ -69,63 +69,65 @@ public class NotificationService {
         try {
             // Must match the verified sender in your screenshot
             Email from = new Email("it22061348@my.sliit.lk");
-            String subject = "Gourmet Express - Order Confirmation #" + orderId;
+            String shortOrderId = orderId != null && orderId.length() >= 8
+                    ? orderId.substring(orderId.length() - 8).toUpperCase()
+                    : orderId;
+            String subject = "Gourmet Express - Receipt for Order #" + shortOrderId;
             Email to = new Email("nithika151@gmail.com"); // Hardcoded to your email to prevent bouncing
 
-            StringBuilder htmlContent = new StringBuilder();
-            htmlContent.append(
-                    "<html><body style='font-family: Arial, sans-serif; background-color: #f9f9f9; padding: 20px;'>");
-            htmlContent.append(
-                    "<div style='max-width: 600px; margin: 0 auto; background-color: #ffffff; padding: 30px; border-radius: 10px; box-shadow: 0 4px 8px rgba(0,0,0,0.1);'>");
-            htmlContent.append(
-                    "<div style='text-align: center; border-bottom: 2px solid #ff4757; padding-bottom: 20px; margin-bottom: 20px;'>");
-            htmlContent.append("<h1 style='color: #ff4757; margin: 0;'>Gourmet Express</h1>");
-            htmlContent.append("<h3 style='color: #555; margin-top: 5px;'>Order Receipt</h3>");
-            htmlContent.append("</div>");
+            StringBuilder html = new StringBuilder();
+            html.append(
+                    "<body style='font-family: Arial, sans-serif; background-color: #05080f; padding: 40px 20px; margin: 0; color: #f8fafc;'>")
+                    .append("<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 16px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>")
+                    .append("<tr><td style='padding: 40px 30px; text-align: center; border-bottom: 1px solid #1e293b; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);'>")
+                    .append("<h1 style='color: #eab308; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;'>Gourmet<span style='color: #ffffff;'>Express</span></h1>")
+                    .append("<p style='color: #10b981; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;'>Payment Verified</p></td></tr>")
 
-            htmlContent.append("<p style='font-size: 16px; color: #333;'>Hello <b>").append(user.getUsername())
-                    .append("</b>,</p>");
-            htmlContent.append(
-                    "<p style='font-size: 15px; color: #555;'>Great news! Your payment was successfully processed and your delicious food is being prepared.</p>");
+                    .append("<tr><td style='padding: 40px 30px;'>")
+                    .append("<h2 style='margin: 0 0 20px 0; color: #ffffff; font-weight: 300;'>Payment <span style='color: #eab308;'>Authorized</span></h2>")
+                    .append("<p style='font-size: 16px; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0;'>Hello <b style='color: #ffffff;'>")
+                    .append(user.getUsername()).append("</b>,</p>")
+                    .append("<p style='font-size: 15px; line-height: 1.6; color: #94a3b8; margin: 0 0 30px 0;'>Your payment transaction was successfully validated via the network. Your culinary request is now actively being synthesized.</p>");
 
-            htmlContent.append(
-                    "<div style='background-color: #f1f2f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>");
-            htmlContent.append(
-                    "<h4 style='margin-top: 0; color: #2f3542; border-bottom: 1px solid #dfe4ea; padding-bottom: 10px;'>Transaction Details</h4>");
-            htmlContent.append("<p style='margin: 5px 0;'><b>Order Number:</b> #").append(orderId).append("</p>");
-            htmlContent.append("<p style='margin: 5px 0;'><b>Amount Paid:</b> LKR ").append(payment.getAmount())
-                    .append("</p>");
-            htmlContent.append("<p style='margin: 5px 0;'><b>Delivery Address:</b> ")
-                    .append(user.getDeliveryAddress() != null ? user.getDeliveryAddress() : "Address on File")
-                    .append("</p>");
-            htmlContent.append("</div>");
+            html.append(
+                    "<div style='background-color: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #1e293b; border-left: 4px solid #10b981;'>")
+                    .append("<h4 style='margin-top: 0; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;'>Transaction Ledger</h4>")
+                    .append("<table style='width: 100%; border-collapse: collapse;'>")
+                    .append("<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Reference Trace:</b></td><td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>#")
+                    .append(shortOrderId).append("</td></tr>")
+                    .append("<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Transfer Amount:</b></td><td style='padding: 10px 0; color: #eab308; font-weight: 700; font-size: 16px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>LKR ")
+                    .append(payment.getAmount()).append("</td></tr>")
+                    .append("<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Drop Coordinate:</b></td><td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>")
+                    .append(user.getDeliveryAddress() != null ? user.getDeliveryAddress() : "Not Specified")
+                    .append("</td></tr>")
+                    .append("</table></div>");
 
             if (orderDetails != null && !orderDetails.isEmpty()) {
-                htmlContent.append(
-                        "<div style='background-color: #f1f2f6; padding: 15px; border-radius: 8px; margin: 20px 0;'>");
-                htmlContent.append(
-                        "<h4 style='margin-top: 0; color: #2f3542; border-bottom: 1px solid #dfe4ea; padding-bottom: 10px;'>Order Summary</h4>");
-                htmlContent.append("<table style='width: 100%; border-collapse: collapse;'>");
+                html.append(
+                        "<div style='background-color: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #1e293b;'>")
+                        .append("<h4 style='margin-top: 0; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;'>Order Configuration</h4>")
+                        .append("<table style='width: 100%; border-collapse: collapse;'>");
                 for (java.util.Map.Entry<String, Object> entry : orderDetails.entrySet()) {
-                    htmlContent.append("<tr>");
-                    htmlContent.append("<td style='padding: 8px 0; color: #555; border-bottom: 1px solid #eee;'><b>")
-                            .append(entry.getKey()).append(":</b></td>");
-                    htmlContent.append(
-                            "<td style='padding: 8px 0; color: #333; text-align: right; border-bottom: 1px solid #eee;'>")
-                            .append(entry.getValue()).append("</td>");
-                    htmlContent.append("</tr>");
+                    if (entry.getValue() != null && !(entry.getValue() instanceof java.util.Collection)
+                            && !(entry.getValue() instanceof java.util.Map)) {
+                        html.append("<tr>")
+                                .append("<td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); text-transform: capitalize;'><b>")
+                                .append(entry.getKey()).append(":</b></td>")
+                                .append("<td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>")
+                                .append(entry.getValue()).append("</td>")
+                                .append("</tr>");
+                    }
                 }
-                htmlContent.append("</table>");
-                htmlContent.append("</div>");
+                html.append("</table></div>");
             }
 
-            htmlContent.append("<br><div style='text-align: center; margin-top: 30px;'>");
-            htmlContent.append("<p style='color: red; font-size: 13px;'><i>(Demo Mode - Original intended recipient: ")
-                    .append(user.getEmail()).append(")</i></p>");
-            htmlContent.append("</div>");
-            htmlContent.append("</div></body></html>");
+            html.append("<div style='text-align: center; padding-top: 20px; border-top: 1px solid #1e293b;'>")
+                    .append("<p style='color: #ef4444; font-size: 12px; margin: 0;'><i>Demo Mode Filter - Authentic Destination: ")
+                    .append(user.getEmail()).append("</i></p>")
+                    .append("</div>")
+                    .append("</td></tr></table></body>");
 
-            Content content = new Content("text/html", htmlContent.toString());
+            Content content = new Content("text/html", html.toString());
             Mail mail = new Mail(from, subject, to, content);
 
             SendGrid sg = new SendGrid(sendGridApiKey);
@@ -162,17 +164,28 @@ public class NotificationService {
                 Email to = new Email("nithika151@gmail.com"); // Hardcoded to your email to prevent bouncing
                 String subject = "Welcome to Gourmet Express, " + user.getUsername() + "!";
 
-                String htmlContent = "<html><body style='font-family: Arial, sans-serif;'>" +
-                        "<div style='background-color: #ffffff; padding: 30px; border: 1px solid #eee; border-radius: 15px;'>"
-                        +
-                        "<h1 style='color: #d9534f;'>Welcome to the Family!</h1>" +
-                        "<p>Hi <b>" + user.getUsername() + "</b>,</p>" +
-                        "<p>Thank you for registering. Your account is now active!</p>" +
-                        "<p><b>Login Email:</b> " + user.getEmail() + "</p>" +
-                        "<br><p style='color: red;'><i>(Demo Mode - This email was originally intended for: "
-                        + user.getEmail() + ")</i></p>" +
-                        "<hr><p style='font-size: 12px; color: #888;'>Gourmet Express Cloud Notification System</p>" +
-                        "</div></body></html>";
+                String htmlContent = "<body style='font-family: Arial, sans-serif; background-color: #05080f; padding: 40px 20px; margin: 0; color: #f8fafc;'>"
+                        + "<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 16px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>"
+                        + "<tr><td style='padding: 40px 30px; text-align: center; border-bottom: 1px solid #1e293b; background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, transparent 100%);'>"
+                        + "<h1 style='color: #eab308; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;'>Gourmet<span style='color: #ffffff;'>Express</span></h1>"
+                        + "<p style='color: #94a3b8; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;'>Identity Confirmed</p></td></tr>"
+                        + "<tr><td style='padding: 40px 30px;'>"
+                        + "<h2 style='margin: 0 0 20px 0; color: #ffffff; font-weight: 300;'>Access <span style='color: #eab308;'>Granted</span></h2>"
+                        + "<p style='font-size: 16px; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0;'>Welcome to the network, <b style='color: #ffffff;'>"
+                        + user.getUsername() + "</b>.</p>"
+                        + "<p style='font-size: 15px; line-height: 1.6; color: #94a3b8; margin: 0 0 30px 0;'>Your client node has been authenticated and registered to the Gourmet Express mainframe. You can now securely request authentic provisions and culinary artifacts.</p>"
+                        + "<div style='background-color: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #1e293b; border-left: 4px solid #3b82f6;'>"
+                        + "<table style='width: 100%; border-collapse: collapse;'>"
+                        + "<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Registered Signature:</b></td><td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>"
+                        + user.getUsername() + "</td></tr>"
+                        + "<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Secure Email Vector:</b></td><td style='padding: 10px 0; color: #eab308; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>"
+                        + user.getEmail() + "</td></tr>"
+                        + "</table></div>"
+                        + "<div style='text-align: center; padding-top: 20px; border-top: 1px solid #1e293b;'>"
+                        + "<p style='color: #ef4444; font-size: 12px; margin: 0;'><i>Demo Mode Filter - Authentic Destination: "
+                        + user.getEmail() + "</i></p>"
+                        + "</div>"
+                        + "</td></tr></table></body>";
 
                 Content content = new Content("text/html", htmlContent);
                 Mail mail = new Mail(from, subject, to, content);
@@ -191,6 +204,99 @@ public class NotificationService {
             }
         } catch (Exception e) {
             throw new RuntimeException("Welcome Email API Error: " + e.getMessage());
+        }
+    }
+
+    public String sendOrderPendingPaymentEmail(String userId, String orderId) {
+        try {
+            // 1. Fetch User Data
+            String cleanIdentityUrl = identityUrl.endsWith("/") ? identityUrl.substring(0, identityUrl.length() - 1)
+                    : identityUrl;
+            String userUrl = cleanIdentityUrl + "/api/users/" + userId;
+            UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
+
+            // 2. Fetch Order Data
+            java.util.Map<String, Object> orderDetails = null;
+            try {
+                String cleanOrderUrl = orderUrl.endsWith("/") ? orderUrl.substring(0, orderUrl.length() - 1) : orderUrl;
+                String orderInfoUrl = cleanOrderUrl + "/orders/" + orderId;
+                System.out.println("Calling Order Service: " + orderInfoUrl);
+                orderDetails = restTemplate.getForObject(orderInfoUrl, java.util.Map.class);
+            } catch (Exception e) {
+                System.err.println("Could not fetch full order details: " + e.getMessage());
+            }
+
+            if (user != null) {
+                Email from = new Email("it22061348@my.sliit.lk");
+                Email to = new Email("nithika151@gmail.com");
+                String shortOrderId = orderId != null && orderId.length() >= 8
+                        ? orderId.substring(orderId.length() - 8).toUpperCase()
+                        : orderId;
+                String subject = "Gourmet Express - Action Required for Order #" + shortOrderId;
+
+                StringBuilder html = new StringBuilder();
+                html.append(
+                        "<body style='font-family: Arial, sans-serif; background-color: #05080f; padding: 40px 20px; margin: 0; color: #f8fafc;'>")
+                        .append("<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 16px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>")
+                        .append("<tr><td style='padding: 40px 30px; text-align: center; border-bottom: 1px solid #1e293b; background: linear-gradient(135deg, rgba(234, 179, 8, 0.1) 0%, transparent 100%);'>")
+                        .append("<h1 style='color: #eab308; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;'>Gourmet<span style='color: #ffffff;'>Express</span></h1>")
+                        .append("<p style='color: #94a3b8; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase;'>Pending Payment</p></td></tr>")
+
+                        .append("<tr><td style='padding: 40px 30px;'>")
+                        .append("<h2 style='margin: 0 0 20px 0; color: #ffffff; font-weight: 300;'>Action <span style='color: #eab308;'>Required</span></h2>")
+                        .append("<p style='font-size: 16px; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0;'>Hello <b style='color: #ffffff;'>")
+                        .append(user.getUsername()).append("</b>,</p>")
+                        .append("<p style='font-size: 15px; line-height: 1.6; color: #94a3b8; margin: 0 0 30px 0;'>Your order <b style='color: #eab308;'>#")
+                        .append(shortOrderId)
+                        .append("</b> has been successfully initiated in our network. To commence preparation, please securely complete the payment process.</p>");
+
+                if (orderDetails != null && !orderDetails.isEmpty()) {
+                    html.append(
+                            "<div style='background-color: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #1e293b;'>")
+                            .append("<h4 style='margin-top: 0; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;'>Order Abstract</h4>")
+                            .append("<table style='width: 100%; border-collapse: collapse;'>");
+
+                    for (java.util.Map.Entry<String, Object> entry : orderDetails.entrySet()) {
+                        if (entry.getValue() != null && !(entry.getValue() instanceof java.util.Collection)
+                                && !(entry.getValue() instanceof java.util.Map)) {
+                            html.append("<tr>")
+                                    .append("<td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); text-transform: capitalize;'><b>")
+                                    .append(entry.getKey()).append(":</b></td>")
+                                    .append("<td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>")
+                                    .append(entry.getValue()).append("</td>")
+                                    .append("</tr>");
+                        }
+                    }
+                    html.append("</table></div>");
+                }
+
+                html.append("<div style='text-align: center; margin-bottom: 30px;'>")
+                        .append("<a href='https://gourmet-express.vercel.app/payments/checkout/").append(orderId)
+                        .append("' style='display: inline-block; padding: 15px 35px; background-color: #eab308; color: #000000; text-decoration: none; border-radius: 100px; font-weight: 700; font-size: 14px; letter-spacing: 0.5px;'>PROCEED TO SECURE CHECKOUT →</a>")
+                        .append("<p style='color: #475569; font-size: 12px; margin-top: 15px;'>(or visit https://gourmet-express.onrender.com)</p>")
+                        .append("</div>");
+
+                html.append("<div style='text-align: center; padding-top: 20px; border-top: 1px solid #1e293b;'>")
+                        .append("<p style='color: #ef4444; font-size: 12px; margin: 0;'><i>Demo Mode Filter - Authentic Destination: ")
+                        .append(user.getEmail()).append("</i></p>")
+                        .append("</div>")
+                        .append("</td></tr></table></body>");
+
+                Content content = new Content("text/html", html.toString());
+                Mail mail = new Mail(from, subject, to, content);
+
+                SendGrid sg = new SendGrid(sendGridApiKey);
+                Request request = new Request();
+                request.setMethod(Method.POST);
+                request.setEndpoint("mail/send");
+                request.setBody(mail.build());
+
+                Response response = sg.api(request);
+                return "SendGrid Status: " + response.getStatusCode() + " - Body: " + response.getBody();
+            }
+            return "User mapping aborted for ID: " + userId;
+        } catch (Exception ex) {
+            return "Failed to dispatch email: " + ex.getMessage();
         }
     }
 }

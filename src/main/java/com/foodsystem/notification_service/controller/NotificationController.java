@@ -32,6 +32,17 @@ public class NotificationController {
         }
     }
 
+    // NEW: Order Pending Payment Endpoint
+    @GetMapping("/order-pending/{userId}/{orderId}")
+    public ResponseEntity<String> sendOrderPending(@PathVariable String userId, @PathVariable String orderId) {
+        try {
+            String result = notificationService.sendOrderPendingPaymentEmail(userId, orderId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Failed: " + e.getMessage());
+        }
+    }
+
     // Ping endpoint for keep-alive (cron-job.org)
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
