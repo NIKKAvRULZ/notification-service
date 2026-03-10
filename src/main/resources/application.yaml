@@ -31,3 +31,4 @@ services:
   identity-url: ${IDENTITY_SERVICE_URL:https://user-identity-service.onrender.com}
   order-url: ${ORDER_SERVICE_URL:https://order-service-production-5615.up.railway.app}
   payment-url: ${PAYMENT_SERVICE_URL:https://food-order-payment-service-production.up.railway.app}
+  catalog-url: ${CATALOG_SERVICE_URL:https://menu-service-production-048a.up.railway.app}

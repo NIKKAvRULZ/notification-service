@@ -30,7 +30,10 @@ public class NotificationService {
     private String paymentUrl;
     @Value("${services.order-url}")
     private String orderUrl;
+    @Value("${services.catalog-url}")
+    private String catalogUrl;
 
+    @SuppressWarnings("unchecked")
     public void processNotification(NotificationRequest request) {
         try {
             String userUrl = identityUrl + "/api/users/" + request.getUserId();
@@ -207,6 +210,7 @@ public class NotificationService {
         }
     }
 
+    @SuppressWarnings("unchecked")
     public String sendOrderPendingPaymentEmail(String userId, String orderId) {
         try {
             // 1. Fetch User Data
@@ -258,7 +262,9 @@ public class NotificationService {
 
                     for (java.util.Map.Entry<String, Object> entry : orderDetails.entrySet()) {
                         if (entry.getValue() != null && !(entry.getValue() instanceof java.util.Collection)
-                                && !(entry.getValue() instanceof java.util.Map)) {
+                                && !(entry.getValue() instanceof java.util.Map)
+                                && !entry.getKey().equals("id") && !entry.getKey().equals("userId")
+                                && !entry.getKey().equals("items")) {
                             html.append("<tr>")
                                     .append("<td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05); text-transform: capitalize;'><b>")
                                     .append(entry.getKey()).append(":</b></td>")
@@ -268,6 +274,65 @@ public class NotificationService {
                         }
                     }
                     html.append("</table></div>");
+
+                    // RENDER ITEMS TABLE WITH IMAGES
+                    if (orderDetails.get("items") instanceof java.util.List) {
+                        java.util.List<java.util.Map<String, Object>> itemsList = (java.util.List<java.util.Map<String, Object>>) orderDetails
+                                .get("items");
+                        if (!itemsList.isEmpty()) {
+                            html.append(
+                                    "<h4 style='margin-bottom: 15px; color: #cbd5e1; font-size: 14px;'>Requested Artifacts:</h4>");
+
+                            for (java.util.Map<String, Object> itemMap : itemsList) {
+                                String itemName = (itemMap.get("name") != null) ? itemMap.get("name").toString()
+                                        : "Unknown Item";
+                                String qty = (itemMap.get("quantity") != null) ? itemMap.get("quantity").toString()
+                                        : "1";
+                                String price = (itemMap.get("price") != null) ? itemMap.get("price").toString() : "0";
+                                String imgUrl = "https://via.placeholder.com/80/1a1a1a/ffffff?text=No+Image"; // Fallback
+
+                                // Fetch Graphic from Catalog Service
+                                try {
+                                    Object menuItemId = itemMap.get("menuItemId");
+                                    if (menuItemId != null && catalogUrl != null) {
+                                        String cleanCat = catalogUrl.endsWith("/")
+                                                ? catalogUrl.substring(0, catalogUrl.length() - 1)
+                                                : catalogUrl;
+                                        String itmUrl = cleanCat + "/menu/items/" + menuItemId.toString();
+                                        java.util.Map<String, Object> catResp = restTemplate.getForObject(itmUrl,
+                                                java.util.Map.class);
+                                        if (catResp != null && catResp.get("data") instanceof java.util.Map) {
+                                            java.util.Map<String, Object> dataMap = (java.util.Map<String, Object>) catResp
+                                                    .get("data");
+                                            if (dataMap.get("imageUrl") != null) {
+                                                imgUrl = dataMap.get("imageUrl").toString();
+                                            }
+                                        }
+                                    }
+                                } catch (Exception ignored) {
+                                }
+
+                                html.append(
+                                        "<div style='display: flex; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid #1e293b;'>")
+                                        .append("<div style='width: 70px; height: 70px; border-radius: 8px; overflow: hidden; margin-right: 15px; border: 1px solid rgba(255,255,255,0.1);'>")
+                                        .append("<img src='").append(imgUrl)
+                                        .append("' style='width: 100%; height: 100%; object-fit: cover;' alt='")
+                                        .append(itemName).append("'/>")
+                                        .append("</div>")
+                                        .append("<div style='flex: 1;'>")
+                                        .append("<h3 style='margin: 0 0 5px 0; font-size: 15px; color: #ffffff;'>")
+                                        .append(itemName).append("</h3>")
+                                        .append("<p style='margin: 0; font-size: 13px; color: #94a3b8;'>Quantity: <span style='color: #ffffff; font-weight: 700;'>")
+                                        .append(qty).append("</span></p>")
+                                        .append("</div>")
+                                        .append("<div>")
+                                        .append("<p style='margin: 0; font-size: 15px; color: #eab308; font-weight: 700;'>LKR ")
+                                        .append(price).append("</p>")
+                                        .append("</div>")
+                                        .append("</div>");
+                            }
+                        }
+                    }
                 }
 
                 html.append("<div style='text-align: center; margin-bottom: 30px;'>")
