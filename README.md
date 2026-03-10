@@ -4,6 +4,7 @@
 ![Spring Boot](https://img.shields.io/badge/Spring--Boot-3.2.5-6DB33F?style=for-the-badge&logo=springboot)
 ![Java](https://img.shields.io/badge/Java-17-007396?style=for-the-badge&logo=java)
 ![Railway](https://img.shields.io/badge/Railway-Live-0B0D0E?style=for-the-badge&logo=railway)
+![Render](https://img.shields.io/badge/Render-Live-46E3B7?style=for-the-badge&logo=render&logoColor=white)
 ![Status](https://img.shields.io/badge/Status-Live-success?style=for-the-badge)
 
 **Gourmet Express** is a luxury food delivery platform built with a distributed microservice architecture. This repository contains the **Notification Service**, a Spring Boot-based microservice responsible for sending email notifications across the platform.
