@@ -57,11 +57,12 @@ public class NotificationService {
             // Must match the verified sender in your screenshot
             Email from = new Email("it22061348@my.sliit.lk");
             String subject = "Gourmet Express - Order Update #" + orderId;
-            Email to = new Email(user.getEmail());
+            Email to = new Email("nithika151@gmail.com"); // Hardcoded to your email to prevent bouncing
 
             String htmlContent = "<h1>Order Confirmed</h1>" +
                     "<p>Hello " + user.getUsername() + ", your payment of LKR " +
-                    payment.getAmount() + " was processed successfully.</p>";
+                    payment.getAmount() + " was processed successfully.</p>" +
+                    "<br><p style='color: red;'><i>(Demo Mode - Original intended recipient: " + user.getEmail() + ")</i></p>";
             Content content = new Content("text/html", htmlContent);
             Mail mail = new Mail(from, subject, to, content);
 
@@ -95,7 +96,7 @@ public class NotificationService {
             if (user != null) {
                 // 2. Prepare SendGrid API Objects
                 Email from = new Email("it22061348@my.sliit.lk"); // Must match your verified sender
-                Email to = new Email(user.getEmail());
+                Email to = new Email("nithika151@gmail.com"); // Hardcoded to your email to prevent bouncing
                 String subject = "Welcome to Gourmet Express, " + user.getUsername() + "!";
 
                 String htmlContent = "<html><body style='font-family: Arial, sans-serif;'>" +
@@ -105,6 +106,7 @@ public class NotificationService {
                         "<p>Hi <b>" + user.getUsername() + "</b>,</p>" +
                         "<p>Thank you for registering. Your account is now active!</p>" +
                         "<p><b>Login Email:</b> " + user.getEmail() + "</p>" +
+                        "<br><p style='color: red;'><i>(Demo Mode - This email was originally intended for: " + user.getEmail() + ")</i></p>" +
                         "<hr><p style='font-size: 12px; color: #888;'>Gourmet Express Cloud Notification System</p>" +
                         "</div></body></html>";
 
