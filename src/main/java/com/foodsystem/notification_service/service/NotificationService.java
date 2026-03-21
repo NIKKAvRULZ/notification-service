@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import java.io.IOException;
+import java.util.List;
+import java.util.Map;
 
 @Service
 public class NotificationService {
@@ -28,7 +30,7 @@ public class NotificationService {
         @Value("${services.catalog-url}")
         private String catalogUrl;
 
-        // BRAND COLOR PALETTE
+        // BRAND LUXURY PALETTE
         private static final String COLOR_GOLD = "#eab308";
         private static final String COLOR_GREEN = "#10b981";
         private static final String COLOR_BG = "#05080f";
@@ -45,25 +47,20 @@ public class NotificationService {
                         UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
 
                         if (user != null) {
-                                System.out.println("--- GOURMET LOG: Triggering email logic for status: "
-                                                + request.getStatus());
                                 if ("succeeded".equalsIgnoreCase(request.getStatus())
                                                 || "completed".equalsIgnoreCase(request.getStatus())) {
                                         sendReceiptEmail(request.getUserId(), request.getOrderId());
                                 } else if ("pending".equalsIgnoreCase(request.getStatus())) {
                                         sendOrderPendingPaymentEmail(request.getUserId(), request.getOrderId());
                                 }
-                        } else {
-                                System.err.println("!!! FAILED: Could not find user metadata for ID: "
-                                                + request.getUserId());
                         }
                 } catch (Exception e) {
-                        System.err.println("!!! INTEGRATION ERROR in processNotification: " + e.getMessage());
+                        System.err.println("!!! INTEGRATION ERROR: " + e.getMessage());
                 }
         }
 
         private String getAuthDestination(UserDTO user) {
-                // RESTORED: Hardcoded for demo/testing as requested
+                // Hardcoded to your inbox for the demo/presentation
                 return "nithika151@gmail.com";
         }
 
@@ -72,14 +69,13 @@ public class NotificationService {
                                 + COLOR_BG + "; padding: 40px 20px; margin: 0; color: " + COLOR_TEXT_MAIN + ";'>" +
                                 "<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; background-color: "
                                 + COLOR_SURFACE + "; border-radius: 20px; border: 1px solid " + COLOR_BORDER
-                                + "; overflow: hidden; box-shadow: 0 15px 50px rgba(0,0,0,0.6);'>" +
-                                (bannerUrl != null ? "<tr><td><img src='" + bannerUrl
-                                                + "' style='width: 100%; display: block; height: 200px; object-fit: cover;' /></td></tr>"
-                                                : "")
+                                + "; overflow: hidden;'>" +
+                                "<tr><td><img src='" + bannerUrl
+                                + "' style='width: 100%; display: block; height: 180px; object-fit: cover;' /></td></tr>"
                                 +
                                 "<tr><td style='padding: 40px 35px 20px; text-align: center;'>" +
                                 "<h1 style='color: " + COLOR_GOLD
-                                + "; margin: 0; font-size: 24px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;'>Gourmet<span style='color: #ffffff;'>Express</span></h1>"
+                                + "; margin: 0; font-size: 26px; font-weight: 800; letter-spacing: 2px; text-transform: uppercase;'>Gourmet<span style='color: #ffffff;'>Express</span></h1>"
                                 +
                                 "<div style='height: 1px; width: 40px; background: " + statusColor
                                 + "; margin: 15px auto;'></div>" +
@@ -93,151 +89,200 @@ public class NotificationService {
                 return "<tr><td style='padding: 30px; text-align: center; border-top: 1px solid " + COLOR_BORDER
                                 + "; background: rgba(0,0,0,0.1);'>" +
                                 "<p style='color: " + COLOR_TEXT_DIM
-                                + "; font-size: 11px; margin: 0 0 12px; text-transform: uppercase; letter-spacing: 1px;'>Gourmet Express HQ &bull; Colombo, SL</p>"
+                                + "; font-size: 11px; margin: 0 0 12px; letter-spacing: 1px;'>GOURMET EXPRESS NETWORKS &bull; COLOMBO HQ</p>"
                                 +
-                                "<p style='color: #ef4444; font-size: 10px; margin: 0;'><i>DEMO TRACE: Authenticated for "
+                                "<p style='color: #ef4444; font-size: 10px; margin: 0;'><i>INTERNAL TRACE: User verified as "
                                 + user.getEmail() + "</i></p>" +
                                 "</td></tr></table></body></html>";
         }
 
-        public String sendWelcomeEmail(String userId) {
-                System.out.println(">>> ENTERING: sendWelcomeEmail for UserID: " + userId);
-                try {
-                        UserDTO user = restTemplate.getForObject(identityUrl + "/api/users/" + userId, UserDTO.class);
-                        if (user == null) {
-                                System.err.println("!!! FAILED: User Mapping (Identity Service) for ID: " + userId);
-                                return "User Mapping Failed";
-                        }
-                        System.out.println("--- GOURMET LOG: Fetched User Profile for " + user.getUsername());
+        @SuppressWarnings("unchecked")
+        private void renderItemTable(StringBuilder html, Map<String, Object> orderDetails) {
+                if (orderDetails == null || !(orderDetails.get("items") instanceof List))
+                        return;
+                List<Map<String, Object>> items = (List<Map<String, Object>>) orderDetails.get("items");
 
-                        Email from = new Email("it22061348@my.sliit.lk");
-                        Email to = new Email(getAuthDestination(user));
-                        String subject = "Access Granted - Welcome to the Gourmet Express Network";
+                html.append("<div style='margin-top: 30px;'><h4 style='font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: "
+                                + COLOR_TEXT_DIM + "; margin-bottom: 15px;'>Your Selection</h4>");
 
-                        StringBuilder html = new StringBuilder();
-                        html.append(getHeaderHtml("Identity Confirmed", "#3b82f6",
-                                        "https://images.unsplash.com/photo-1504674900247-0877df9cc836?q=80&w=600&h=200&fit=crop"))
-                                        .append("<tr><td style='padding: 0 40px 40px;'>")
-                                        .append("<h2 style='font-weight: 300; font-size: 26px; margin: 0 0 20px;'>Welcome, "
-                                                        + user.getUsername() + "</h2>")
-                                        .append("<p style='font-size: 15px; color: " + COLOR_TEXT_DIM
-                                                        + "; line-height: 1.6;'>Your client node has been successfully synchronized.</p>")
-                                        .append("<div style='text-align: center; margin-top: 40px;'>")
-                                        .append("<a href='https://gourmet-express.vercel.app/catalog' style='background: "
-                                                        + COLOR_GOLD
-                                                        + "; color: #000; padding: 16px 40px; border-radius: 50px; text-decoration: none; font-weight: 800;'>EXPLORE CATALOG →</a>")
-                                        .append("</div></td></tr>")
-                                        .append(getFooterHtml(user));
+                for (Map<String, Object> itm : items) {
+                        String name = itm.getOrDefault("name", "Gourmet Dish").toString();
+                        String qty = itm.getOrDefault("quantity", "1").toString();
+                        String price = itm.getOrDefault("price", "0").toString();
+                        String imgUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&h=100&fit=crop";
 
-                        return dispatchEmail(from, to, subject, html.toString());
-                } catch (Exception e) {
-                        System.err.println("!!! EXCEPTION in sendWelcomeEmail: " + e.getMessage());
-                        return "Failed: " + e.getMessage();
-                }
-        }
-
-        public String sendOrderPendingPaymentEmail(String userId, String orderId) {
-                System.out.println(">>> ENTERING: sendOrderPendingPaymentEmail for User: " + userId + ", Order: "
-                                + orderId);
-                try {
-                        UserDTO user = restTemplate.getForObject(identityUrl + "/api/users/" + userId, UserDTO.class);
-                        java.util.Map<String, Object> orderDetails = restTemplate
-                                        .getForObject(orderUrl + "/orders/" + orderId, java.util.Map.class);
-                        if (user == null || orderDetails == null) {
-                                System.err.println("!!! FAILED: Data Fetch (User or Orders missing) for Order: "
-                                                + orderId);
-                                return "Data Error";
+                        // TRY TO FETCH IMAGE FROM CATALOG SERVICE
+                        try {
+                                Object menuItemId = itm.get("menuItemId");
+                                if (menuItemId != null) {
+                                        String itmUrl = catalogUrl + "/menu/items/" + menuItemId.toString();
+                                        Map<String, Object> catResp = restTemplate.getForObject(itmUrl, Map.class);
+                                        if (catResp != null && catResp.get("data") instanceof Map) {
+                                                Map<String, Object> data = (Map<String, Object>) catResp.get("data");
+                                                if (data.get("imageUrl") != null)
+                                                        imgUrl = data.get("imageUrl").toString();
+                                        }
+                                }
+                        } catch (Exception ignored) {
                         }
 
-                        Email from = new Email("it22061348@my.sliit.lk");
-                        Email to = new Email(getAuthDestination(user));
-                        String subject = "Action Required - Order #" + orderId;
-
-                        StringBuilder html = new StringBuilder();
-                        html.append(getHeaderHtml("Pending Authorization", COLOR_GOLD,
-                                        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=600&h=200&fit=crop"))
-                                        .append("<tr><td style='padding: 0 40px 40px;'>")
-                                        .append("<p style='color: " + COLOR_TEXT_DIM
-                                                        + ";'>Your request is queued. Finalize the credit transfer to commence synthesis.</p>")
-                                        .append("<div style='text-align: center; margin: 40px 0 20px;'>")
-                                        .append("<a href='https://gourmet-express.vercel.app/payments/checkout/"
-                                                        + orderId + "' style='background: " + COLOR_GOLD
-                                                        + "; color: #000; padding: 18px 45px; border-radius: 50px; text-decoration: none; font-weight: 800;'>EXECUTE PAYMENT →</a>")
-                                        .append("</div></td></tr>")
-                                        .append(getFooterHtml(user));
-
-                        return dispatchEmail(from, to, subject, html.toString());
-                } catch (Exception e) {
-                        System.err.println("!!! EXCEPTION in sendOrderPending: " + e.getMessage());
-                        return "Failed: " + e.getMessage();
+                        html.append("<div style='display: flex; align-items: center; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid "
+                                        + COLOR_BORDER + "; background: rgba(255,255,255,0.02);'>")
+                                        .append("<div style='width: 50px; height: 50px; border-radius: 8px; overflow: hidden; margin-right: 15px;'><img src='"
+                                                        + imgUrl
+                                                        + "' style='width: 100%; height: 100%; object-fit: cover;' /></div>")
+                                        .append("<div style='flex: 1;'><div style='font-weight: 600; color: #fff;'>"
+                                                        + name + "</div><div style='color: " + COLOR_TEXT_DIM
+                                                        + "; font-size: 12px;'>Quantity: " + qty + "</div></div>")
+                                        .append("<div style='font-weight: 700; color: " + COLOR_GOLD + ";'>LKR " + price
+                                                        + "</div>")
+                                        .append("</div>");
                 }
+                html.append("</div>");
         }
 
         public String sendReceiptEmail(String userId, String orderId) {
-                System.out.println(">>> ENTERING: sendReceiptEmail for User: " + userId + ", Order: " + orderId);
+                System.out.println(">>> ENTERING: sendReceiptEmail for " + orderId);
                 try {
                         UserDTO user = restTemplate.getForObject(identityUrl + "/api/users/" + userId, UserDTO.class);
                         PaymentResponse payResp = restTemplate.getForObject(
                                         paymentUrl + "/api/payments/order/" + orderId, PaymentResponse.class);
                         PaymentDTO payment = (payResp != null) ? payResp.getData() : null;
-                        if (user == null || payment == null) {
-                                System.err.println("!!! FAILED: Payment Sync (Data Missing) for Order: " + orderId);
-                                return "Data Missing";
-                        }
+                        Map<String, Object> orderDetails = restTemplate.getForObject(orderUrl + "/orders/" + orderId,
+                                        Map.class);
 
-                        Email from = new Email("it22061348@my.sliit.lk");
-                        Email to = new Email(getAuthDestination(user));
-                        String subject = "Receipt - Order #" + orderId;
+                        if (user == null || payment == null)
+                                return "Data Sync Error";
+
+                        String from = "it22061348@my.sliit.lk";
+                        String to = getAuthDestination(user);
+                        String subject = "Payment Confirmed - Receipt #"
+                                        + orderId.substring(Math.max(0, orderId.length() - 8));
 
                         StringBuilder html = new StringBuilder();
-                        html.append(getHeaderHtml("Payment Verified", COLOR_GREEN,
+                        html.append(getHeaderHtml("Transaction Succeeded", COLOR_GREEN,
                                         "https://images.unsplash.com/photo-1555244162-803834f70033?q=80&w=600&h=200&fit=crop"))
                                         .append("<tr><td style='padding: 0 40px 40px;'>")
-                                        .append("<h2 style='font-weight: 300; font-size: 24px;'>Payment authorized. Artifacts are being prepared.</h2>")
-                                        .append("<p style='color: " + COLOR_GOLD + "; font-size: 20px;'>Total: LKR "
-                                                        + payment.getAmount() + "</p>")
-                                        .append("<div style='text-align: center; margin-top: 40px;'>")
-                                        .append("<a href='https://gourmet-express.vercel.app/orders' style='border: 1px solid "
-                                                        + COLOR_BORDER
-                                                        + "; color: #fff; padding: 14px 35px; border-radius: 50px; text-decoration: none;'>TRACK ORDER</a>")
+                                        .append("<h2 style='font-weight: 300; font-size: 22px;'>Artifacts are being <span style='color: "
+                                                        + COLOR_GOLD + ";'>prepared</span>.</h2>")
+                                        .append("<p style='color: " + COLOR_TEXT_DIM
+                                                        + "; line-height: 1.6;'>Greetings, " + user.getUsername()
+                                                        + ". Your payment has been verified and your order is now entering the preparation phase.</p>")
+                                        .append("<div style='background: rgba(16,185,129,0.05); border: 1px solid rgba(16,185,129,0.2); border-radius: 12px; padding: 20px; margin-bottom: 25px;'>")
+                                        .append("<table width='100%'>")
+                                        .append("<tr><td style='color: " + COLOR_TEXT_DIM
+                                                        + "; font-size: 13px;'>Reference</td><td style='text-align: right; font-family: monospace; font-size: 13px;'>"
+                                                        + payment.getStripePaymentIntentId() + "</td></tr>")
+                                        .append("<tr><td style='color: " + COLOR_TEXT_MAIN
+                                                        + "; font-size: 18px; font-weight: 800; padding-top: 15px;'>Total Paid</td><td style='text-align: right; color: "
+                                                        + COLOR_GOLD
+                                                        + "; font-size: 22px; font-weight: 800; padding-top: 15px;'>LKR "
+                                                        + payment.getAmount() + "</td></tr>")
+                                        .append("</table></div>");
+
+                        renderItemTable(html, orderDetails);
+
+                        html.append("<div style='text-align: center; margin-top: 40px;'>")
+                                        .append("<a href='https://gourmet-express-frontend.onrender.com/orders' style='background: "
+                                                        + COLOR_GOLD
+                                                        + "; color: #000; padding: 14px 35px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 13px;'>TRACK SHIPMENT STATUS</a>")
                                         .append("</div></td></tr>")
                                         .append(getFooterHtml(user));
 
                         return dispatchEmail(from, to, subject, html.toString());
                 } catch (Exception e) {
-                        System.err.println("!!! EXCEPTION in sendReceipt: " + e.getMessage());
-                        return "Failed: " + e.getMessage();
+                        return "Receipt Failed: " + e.getMessage();
                 }
         }
 
-        private String dispatchEmail(Email from, Email to, String subject, String htmlBody) {
-                System.out.println("--- GOURMET DISPATCH: Initializing SendGrid for " + to.getEmail());
+        public String sendWelcomeEmail(String userId) {
+                System.out.println(">>> ENTERING: sendWelcomeEmail for " + userId);
                 try {
-                        from.setName("Gourmet Express");
+                        UserDTO user = restTemplate.getForObject(identityUrl + "/api/users/" + userId, UserDTO.class);
+                        if (user == null)
+                                return "User Missing";
+
+                        String from = "it22061348@my.sliit.lk";
+                        String to = getAuthDestination(user);
+                        String subject = "Identity Verified - Welcome to Gourmet Express";
+
+                        StringBuilder html = new StringBuilder();
+                        html.append(getHeaderHtml("Access Authorized", "#3b82f6",
+                                        "https://images.unsplash.com/photo-1514362545857-3bc16c4c7d1b?q=80&w=600&h=200&fit=crop"))
+                                        .append("<tr><td style='padding: 0 40px 40px;'>")
+                                        .append("<h2 style='font-weight: 300; font-size: 24px; text-align: center;'>Welcome to the <span style='color: "
+                                                        + COLOR_GOLD + ";'>Circle</span></h2>")
+                                        .append("<p style='color: " + COLOR_TEXT_DIM
+                                                        + "; line-height: 1.6; text-align: center;'>Your credentials have been harmonized with our global network. Premium culinary exploration awaits.</p>")
+                                        .append("<div style='text-align: center; margin-top: 40px;'>")
+                                        .append("<a href='https://gourmet-express-frontend.onrender.com/catalog' style='background: "
+                                                        + COLOR_GOLD
+                                                        + "; color: #000; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 14px;'>BEGIN EXPLORATION →</a>")
+                                        .append("</div></td></tr>")
+                                        .append(getFooterHtml(user));
+
+                        return dispatchEmail(from, to, subject, html.toString());
+                } catch (Exception e) {
+                        return "Welcome Failed: " + e.getMessage();
+                }
+        }
+
+        public String sendOrderPendingPaymentEmail(String userId, String orderId) {
+                System.out.println(">>> ENTERING: sendOrderPending for " + orderId);
+                try {
+                        UserDTO user = restTemplate.getForObject(identityUrl + "/api/users/" + userId, UserDTO.class);
+                        Map<String, Object> orderDetails = restTemplate.getForObject(orderUrl + "/orders/" + orderId,
+                                        Map.class);
+                        if (user == null || orderDetails == null)
+                                return "Data Lost";
+
+                        String from = "it22061348@my.sliit.lk";
+                        String to = getAuthDestination(user);
+                        String subject = "Priority Action - Secure Your Artifacts";
+
+                        StringBuilder html = new StringBuilder();
+                        html.append(getHeaderHtml("Payment Required", COLOR_GOLD,
+                                        "https://images.unsplash.com/photo-1414235077428-338989a2e8c0?q=80&w=600&h=200&fit=crop"))
+                                        .append("<tr><td style='padding: 0 40px 40px;'>")
+                                        .append("<p style='color: " + COLOR_TEXT_DIM
+                                                        + "; line-height: 1.6;'>Your selection is locked. To initiate synthesis and secure delivery, finalize your transfer through our encrypted payment gateway.</p>");
+
+                        renderItemTable(html, orderDetails);
+
+                        html.append("<div style='text-align: center; margin-top: 40px;'>")
+                                        .append("<a href='https://gourmet-express-frontend.onrender.com/payments/checkout/"
+                                                        + orderId + "' style='background: " + COLOR_GOLD
+                                                        + "; color: #000; padding: 18px 45px; border-radius: 100px; text-decoration: none; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>EXECUTE PAYMENT →</a>")
+                                        .append("</div></td></tr>")
+                                        .append(getFooterHtml(user));
+
+                        return dispatchEmail(from, to, subject, html.toString());
+                } catch (Exception e) {
+                        return "Pending Failed: " + e.getMessage();
+                }
+        }
+
+        private String dispatchEmail(String fromEmail, String toEmail, String subject, String htmlBody) {
+                System.out.println("--- DISPATCHING to " + toEmail + " via SendGrid...");
+                try {
+                        Email from = new Email(fromEmail);
+                        from.setName("Gourmet Express Concierge");
+                        Email to = new Email(toEmail);
                         Content content = new Content("text/html", htmlBody);
                         Mail mail = new Mail(from, subject, to, content);
-
-                        if (sendGridApiKey == null || sendGridApiKey.contains("UNSET") || sendGridApiKey.isEmpty()) {
-                                System.err.println("!!! ERROR: SENDGRID_API_KEY is missing or invalid in environment.");
-                        }
 
                         SendGrid sg = new SendGrid(sendGridApiKey);
                         Request request = new Request();
                         request.setMethod(Method.POST);
                         request.setEndpoint("mail/send");
                         request.setBody(mail.build());
-
                         Response response = sg.api(request);
 
-                        System.out.println(">>> SENDGRID RESPONSE: Status=" + response.getStatusCode());
-                        if (response.getStatusCode() >= 400) {
-                                System.err.println("!!! SENDGRID FAILURE BODY: " + response.getBody());
-                        }
-
-                        return "Status: " + response.getStatusCode() + " | Body: " + response.getBody();
+                        System.out.println(">>> SENDGRID STATUS: " + response.getStatusCode());
+                        return "Success: " + response.getStatusCode();
                 } catch (IOException e) {
-                        System.err.println("!!! IO EXCEPTION during SendGrid Dispatch: " + e.getMessage());
-                        return "SendGrid Client Error: " + e.getMessage();
+                        System.err.println("!!! SENDGRID ERROR: " + e.getMessage());
+                        return "SendGrid Error: " + e.getMessage();
                 }
         }
 }
