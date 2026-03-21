@@ -98,9 +98,30 @@ public class NotificationService {
 
         @SuppressWarnings("unchecked")
         private void renderItemTable(StringBuilder html, Map<String, Object> orderDetails) {
-                if (orderDetails == null || !(orderDetails.get("items") instanceof List))
+                if (orderDetails == null)
                         return;
-                List<Map<String, Object>> items = (List<Map<String, Object>>) orderDetails.get("items");
+
+                // Handle nested 'data' wrapper if it exists
+                if (orderDetails.containsKey("data") && orderDetails.get("data") instanceof Map) {
+                        orderDetails = (Map<String, Object>) orderDetails.get("data");
+                }
+
+                List<Map<String, Object>> items = null;
+
+                if (orderDetails.get("items") instanceof List) {
+                        items = (List<Map<String, Object>>) orderDetails.get("items");
+                } else if (orderDetails.containsKey("product")) {
+                        // Legacy single-item order wrapper
+                        Map<String, Object> single = new java.util.HashMap<>();
+                        single.put("name", orderDetails.get("product"));
+                        single.put("quantity", orderDetails.get("quantity"));
+                        single.put("price", orderDetails.get("price"));
+                        single.put("menuItemId", orderDetails.get("productId")); // sometimes maps to product ID
+                        items = java.util.Collections.singletonList(single);
+                }
+
+                if (items == null || items.isEmpty())
+                        return;
 
                 html.append("<div style='margin-top: 30px;'><h4 style='font-size: 12px; text-transform: uppercase; letter-spacing: 1px; color: "
                                 + COLOR_TEXT_DIM + "; margin-bottom: 15px;'>Your Selection</h4>");
@@ -109,32 +130,43 @@ public class NotificationService {
                         String name = itm.getOrDefault("name", "Gourmet Dish").toString();
                         String qty = itm.getOrDefault("quantity", "1").toString();
                         String price = itm.getOrDefault("price", "0").toString();
-                        String imgUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=100&h=100&fit=crop";
+                        // Elegant default imagery
+                        String imgUrl = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=150&h=150&fit=crop";
 
-                        // TRY TO FETCH IMAGE FROM CATALOG SERVICE
+                        // TRY TO FETCH HIGH-RES IMAGE FROM CATALOG SERVICE
                         try {
                                 Object menuItemId = itm.get("menuItemId");
+                                if (menuItemId == null)
+                                        menuItemId = itm.get("productId"); // Fallback for legacy
+
                                 if (menuItemId != null) {
                                         String itmUrl = catalogUrl + "/menu/items/" + menuItemId.toString();
                                         Map<String, Object> catResp = restTemplate.getForObject(itmUrl, Map.class);
                                         if (catResp != null && catResp.get("data") instanceof Map) {
                                                 Map<String, Object> data = (Map<String, Object>) catResp.get("data");
-                                                if (data.get("imageUrl") != null)
+                                                if (data.get("imageUrl") != null) {
                                                         imgUrl = data.get("imageUrl").toString();
+                                                }
+                                        } else if (catResp != null && catResp.get("imageUrl") != null) {
+                                                // Fallback for direct response
+                                                imgUrl = catResp.get("imageUrl").toString();
                                         }
                                 }
                         } catch (Exception ignored) {
+                                System.out.println("--- GOURMET LOG: Using default image for " + name);
                         }
 
                         html.append("<div style='display: flex; align-items: center; padding: 15px; border-radius: 12px; margin-bottom: 10px; border: 1px solid "
                                         + COLOR_BORDER + "; background: rgba(255,255,255,0.02);'>")
-                                        .append("<div style='width: 50px; height: 50px; border-radius: 8px; overflow: hidden; margin-right: 15px;'><img src='"
+                                        .append("<div style='width: 60px; height: 60px; border-radius: 8px; overflow: hidden; margin-right: 15px;'><img src='"
                                                         + imgUrl
                                                         + "' style='width: 100%; height: 100%; object-fit: cover;' /></div>")
-                                        .append("<div style='flex: 1;'><div style='font-weight: 600; color: #fff;'>"
+                                        .append("<div style='flex: 1;'><div style='font-weight: 600; font-size: 15px; color: #fff; margin-bottom: 4px;'>"
                                                         + name + "</div><div style='color: " + COLOR_TEXT_DIM
-                                                        + "; font-size: 12px;'>Quantity: " + qty + "</div></div>")
-                                        .append("<div style='font-weight: 700; color: " + COLOR_GOLD + ";'>LKR " + price
+                                                        + "; font-size: 12px; text-transform: uppercase; letter-spacing: 0.5px;'>Qty: "
+                                                        + qty + "</div></div>")
+                                        .append("<div style='font-weight: 800; font-size: 15px; color: " + COLOR_GOLD
+                                                        + ";'>LKR " + price
                                                         + "</div>")
                                         .append("</div>");
                 }
@@ -183,7 +215,7 @@ public class NotificationService {
                         renderItemTable(html, orderDetails);
 
                         html.append("<div style='text-align: center; margin-top: 40px;'>")
-                                        .append("<a href='https://gourmet-express-frontend.onrender.com/orders' style='background: "
+                                        .append("<a href='https://food-ordering-frontend-2c1l.onrender.com' style='background: "
                                                         + COLOR_GOLD
                                                         + "; color: #000; padding: 14px 35px; border-radius: 50px; text-decoration: none; font-weight: 700; font-size: 13px;'>TRACK SHIPMENT STATUS</a>")
                                         .append("</div></td></tr>")
@@ -215,7 +247,7 @@ public class NotificationService {
                                         .append("<p style='color: " + COLOR_TEXT_DIM
                                                         + "; line-height: 1.6; text-align: center;'>Your credentials have been harmonized with our global network. Premium culinary exploration awaits.</p>")
                                         .append("<div style='text-align: center; margin-top: 40px;'>")
-                                        .append("<a href='https://gourmet-express-frontend.onrender.com/catalog' style='background: "
+                                        .append("<a href='https://food-ordering-frontend-2c1l.onrender.com' style='background: "
                                                         + COLOR_GOLD
                                                         + "; color: #000; padding: 15px 40px; border-radius: 50px; text-decoration: none; font-weight: 800; font-size: 14px;'>BEGIN EXPLORATION →</a>")
                                         .append("</div></td></tr>")
@@ -250,7 +282,7 @@ public class NotificationService {
                         renderItemTable(html, orderDetails);
 
                         html.append("<div style='text-align: center; margin-top: 40px;'>")
-                                        .append("<a href='https://gourmet-express-frontend.onrender.com/payments/checkout/"
+                                        .append("<a href='https://food-ordering-frontend-2c1l.onrender.com"
                                                         + orderId + "' style='background: " + COLOR_GOLD
                                                         + "; color: #000; padding: 18px 45px; border-radius: 100px; text-decoration: none; font-weight: 800; font-size: 14px; letter-spacing: 1px;'>EXECUTE PAYMENT →</a>")
                                         .append("</div></td></tr>")
