@@ -26,7 +26,9 @@ jobs:
         uses: snyk/actions/setup@master
 
       - name: Run Snyk SAST Scanner
-        run: snyk test --all-projects
+        run: |
+          chmod +x mvnw
+          snyk test --all-projects
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
 
