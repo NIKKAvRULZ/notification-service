@@ -364,4 +364,142 @@ public class NotificationService {
             return "Failed to dispatch email: " + ex.getMessage();
         }
     }
+
+    @SuppressWarnings("unchecked")
+    public String sendReceiptEmail(String userId, String orderId) {
+        try {
+            // 1. Fetch User Data
+            String cleanIdentityUrl = identityUrl.endsWith("/") ? identityUrl.substring(0, identityUrl.length() - 1)
+                    : identityUrl;
+            String userUrl = cleanIdentityUrl + "/api/users/" + userId;
+            UserDTO user = restTemplate.getForObject(userUrl, UserDTO.class);
+
+            // 2. Fetch Payment Data
+            String cleanPaymentUrl = paymentUrl.endsWith("/") ? paymentUrl.substring(0, paymentUrl.length() - 1)
+                    : paymentUrl;
+            String paymentInfoUrl = cleanPaymentUrl + "/api/payments/order/" + orderId;
+            PaymentResponse paymentResponse = restTemplate.getForObject(paymentInfoUrl, PaymentResponse.class);
+            PaymentDTO payment = (paymentResponse != null) ? paymentResponse.getData() : null;
+
+            // 3. Fetch Order Data
+            java.util.Map<String, Object> orderDetails = null;
+            try {
+                String cleanOrderUrl = orderUrl.endsWith("/") ? orderUrl.substring(0, orderUrl.length() - 1) : orderUrl;
+                String orderInfoUrl = cleanOrderUrl + "/orders/" + orderId;
+                orderDetails = restTemplate.getForObject(orderInfoUrl, java.util.Map.class);
+            } catch (Exception e) {
+                System.err.println("Could not fetch order details for receipt: " + e.getMessage());
+            }
+
+            if (user != null && payment != null) {
+                Email from = new Email("it22061348@my.sliit.lk");
+                Email to = new Email("nithika151@gmail.com");
+                String shortOrderId = orderId.length() >= 8 ? orderId.substring(orderId.length() - 8).toUpperCase()
+                        : orderId;
+                String subject = "Gourmet Express - Receipt for Order #" + shortOrderId;
+
+                StringBuilder html = new StringBuilder();
+                html.append(
+                        "<body style='font-family: Arial, sans-serif; background-color: #05080f; padding: 40px 20px; margin: 0; color: #f8fafc;'>")
+                        .append("<table width='100%' cellpadding='0' cellspacing='0' style='max-width: 600px; margin: 0 auto; background-color: #0f172a; border-radius: 16px; border: 1px solid #1e293b; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.5);'>")
+                        .append("<tr><td style='padding: 40px 30px; text-align: center; border-bottom: 1px solid #1e293b; background: linear-gradient(135deg, rgba(16, 185, 129, 0.1) 0%, transparent 100%);'>")
+                        .append("<h1 style='color: #eab308; margin: 0; font-size: 28px; font-weight: 800; letter-spacing: 1px; text-transform: uppercase;'>Gourmet<span style='color: #ffffff;'>Express</span></h1>")
+                        .append("<p style='color: #10b981; margin: 10px 0 0 0; font-size: 14px; letter-spacing: 2px; text-transform: uppercase; font-weight: 600;'>Payment Successful</p></td></tr>")
+
+                        .append("<tr><td style='padding: 40px 30px;'>")
+                        .append("<h2 style='margin: 0 0 20px 0; color: #ffffff; font-weight: 300;'>Order <span style='color: #eab308;'>Receipt</span></h2>")
+                        .append("<p style='font-size: 16px; line-height: 1.6; color: #cbd5e1; margin: 0 0 20px 0;'>Hello <b style='color: #ffffff;'>")
+                        .append(user.getUsername()).append("</b>,</p>")
+                        .append("<p style='font-size: 15px; line-height: 1.6; color: #94a3b8; margin: 0 0 30px 0;'>Thank you for your order! Your payment for order <b style='color: #eab308;'>#")
+                        .append(shortOrderId)
+                        .append("</b> has been successfully processed. Here is your digital receipt.</p>");
+
+                // PAYMENT DETAILS
+                html.append(
+                        "<div style='background-color: rgba(255,255,255,0.02); padding: 25px; border-radius: 12px; margin-bottom: 30px; border: 1px solid #1e293b; border-left: 4px solid #10b981;'>")
+                        .append("<h4 style='margin-top: 0; color: #94a3b8; border-bottom: 1px solid #1e293b; padding-bottom: 10px; text-transform: uppercase; font-size: 11px; letter-spacing: 1px;'>Transaction Ledger</h4>")
+                        .append("<table style='width: 100%; border-collapse: collapse;'>")
+                        .append("<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Payment ID:</b></td><td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>")
+                        .append(payment.getId()).append("</td></tr>")
+                        .append("<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Stripe Intent:</b></td><td style='padding: 10px 0; color: #ffffff; font-size: 14px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>")
+                        .append(payment.getStripePaymentIntentId()).append("</td></tr>")
+                        .append("<tr><td style='padding: 10px 0; color: #94a3b8; font-size: 14px; border-bottom: 1px solid rgba(255,255,255,0.05);'><b>Total Amount:</b></td><td style='padding: 10px 0; color: #eab308; font-weight: 700; font-size: 18px; text-align: right; border-bottom: 1px solid rgba(255,255,255,0.05);'>")
+                        .append(payment.getCurrency()).append(" ").append(payment.getAmount()).append("</td></tr>")
+                        .append("</table></div>");
+
+                // ORDER ITEMS
+                if (orderDetails != null && orderDetails.get("items") instanceof java.util.List) {
+                    java.util.List<java.util.Map<String, Object>> itemsList = (java.util.List<java.util.Map<String, Object>>) orderDetails
+                            .get("items");
+                    if (!itemsList.isEmpty()) {
+                        html.append(
+                                "<h4 style='margin-bottom: 15px; color: #cbd5e1; font-size: 14px;'>Ordered Items:</h4>");
+                        for (java.util.Map<String, Object> itemMap : itemsList) {
+                            String itemName = (itemMap.get("name") != null) ? itemMap.get("name").toString()
+                                    : "Food Item";
+                            String qty = (itemMap.get("quantity") != null) ? itemMap.get("quantity").toString() : "1";
+                            String price = (itemMap.get("price") != null) ? itemMap.get("price").toString() : "0";
+                            String imgUrl = "https://via.placeholder.com/80/1a1a1a/ffffff?text="
+                                    + itemName.replace(" ", "+");
+
+                            // Optional: Fetch image from catalog service
+                            try {
+                                Object menuItemId = itemMap.get("menuItemId");
+                                if (menuItemId != null && catalogUrl != null) {
+                                    String cleanCat = catalogUrl.endsWith("/")
+                                            ? catalogUrl.substring(0, catalogUrl.length() - 1)
+                                            : catalogUrl;
+                                    String itmUrl = cleanCat + "/menu/items/" + menuItemId.toString();
+                                    java.util.Map<String, Object> catResp = restTemplate.getForObject(itmUrl,
+                                            java.util.Map.class);
+                                    if (catResp != null && catResp.get("data") instanceof java.util.Map) {
+                                        java.util.Map<String, Object> dataMap = (java.util.Map<String, Object>) catResp
+                                                .get("data");
+                                        if (dataMap.get("imageUrl") != null)
+                                            imgUrl = dataMap.get("imageUrl").toString();
+                                    }
+                                }
+                            } catch (Exception ignored) {
+                            }
+
+                            html.append(
+                                    "<div style='display: flex; align-items: center; margin-bottom: 15px; background: rgba(255,255,255,0.03); padding: 15px; border-radius: 12px; border: 1px solid #1e293b;'>")
+                                    .append("<div style='width: 60px; height: 60px; border-radius: 8px; overflow: hidden; margin-right: 15px; border: 1px solid rgba(255,255,255,0.1);'>")
+                                    .append("<img src='").append(imgUrl)
+                                    .append("' style='width: 100%; height: 100%; object-fit: cover;' /></div>")
+                                    .append("<div style='flex: 1;'><h3 style='margin: 0 0 5px 0; font-size: 15px; color: #ffffff;'>")
+                                    .append(itemName).append("</h3>")
+                                    .append("<p style='margin: 0; font-size: 13px; color: #94a3b8;'>Quantity: ")
+                                    .append(qty).append("</p></div>")
+                                    .append("<div><p style='margin: 0; font-size: 15px; color: #eab308; font-weight: 700;'>")
+                                    .append(payment.getCurrency()).append(" ").append(price).append("</p></div>")
+                                    .append("</div>");
+                        }
+                    }
+                }
+
+                html.append(
+                        "<div style='text-align: center; padding: 30px 0; border-top: 1px solid #1e293b; margin-top: 20px;'>")
+                        .append("<p style='color: #94a3b8; font-size: 14px;'>Questions? Contact support at support@gourmetexpress.com</p>")
+                        .append("<p style='color: #ef4444; font-size: 12px; margin-top: 10px;'><i>Demo Mode Trace: Sent to ")
+                        .append(user.getEmail()).append("</i></p>")
+                        .append("</div></td></tr></table></body>");
+
+                Content content = new Content("text/html", html.toString());
+                Mail mail = new Mail(from, subject, to, content);
+
+                SendGrid sg = new SendGrid(sendGridApiKey);
+                Request request = new Request();
+                request.setMethod(Method.POST);
+                request.setEndpoint("mail/send");
+                request.setBody(mail.build());
+                Response apiResponse = sg.api(request);
+
+                return "Receipt Sent. SendGrid Status: " + apiResponse.getStatusCode();
+            }
+            return "Failed to send receipt: User or Payment data not found.";
+        } catch (Exception e) {
+            return "Critical Receipt Error: " + e.getMessage();
+        }
+    }
 }

@@ -43,6 +43,17 @@ public class NotificationController {
         }
     }
 
+    // NEW: Payment Receipt Endpoint
+    @GetMapping("/receipt/{userId}/{orderId}")
+    public ResponseEntity<String> sendReceipt(@PathVariable String userId, @PathVariable String orderId) {
+        try {
+            String result = notificationService.sendReceiptEmail(userId, orderId);
+            return ResponseEntity.ok(result);
+        } catch (Exception e) {
+            return ResponseEntity.status(500).body("Receipt Delivery Failed: " + e.getMessage());
+        }
+    }
+
     // Ping endpoint for keep-alive (cron-job.org)
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
