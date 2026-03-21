@@ -22,12 +22,13 @@ jobs:
         # This compiles your Notification Service and runs any unit tests
         run: mvn clean package -DskipTests 
 
+      - name: Setup Snyk CLI
+        uses: snyk/actions/setup@master
+
       - name: Run Snyk SAST Scanner
-        uses: snyk/actions/maven@master
+        run: snyk test --all-projects
         env:
           SNYK_TOKEN: ${{ secrets.SNYK_TOKEN }}
-        with:
-          args: --all-projects
 
       - name: Log in to Docker Hub
         uses: docker/login-action@v3
