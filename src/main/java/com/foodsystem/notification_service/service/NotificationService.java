@@ -60,9 +60,8 @@ public class NotificationService {
         }
 
         private String getAuthDestination(UserDTO user) {
-                // Hardcoded for demo/testing as requested previously, change to user.getEmail()
-                // for production
-                return "nithika151@gmail.com";
+                // Resolved: Switching from demo hardcoding to dynamic production routing
+                return (user != null && user.getEmail() != null) ? user.getEmail() : "nithika151@gmail.com";
         }
 
         private String getHeaderHtml(String title, String statusColor, String bannerUrl) {
@@ -130,7 +129,7 @@ public class NotificationService {
                         if (user == null)
                                 return "User Mapping Failed";
 
-                        Email from = new Email("it22061348@my.sliit.lk");
+                        Email from = new Email(senderEmail != null ? senderEmail : "it22061348@my.sliit.lk");
                         Email to = new Email(getAuthDestination(user));
                         String subject = "Access Granted - Welcome to Gourmet Express";
 
@@ -176,7 +175,7 @@ public class NotificationService {
 
                         String shortId = orderId.length() >= 8 ? orderId.substring(orderId.length() - 8).toUpperCase()
                                         : orderId;
-                        Email from = new Email("it22061348@my.sliit.lk");
+                        Email from = new Email(senderEmail != null ? senderEmail : "it22061348@my.sliit.lk");
                         Email to = new Email(getAuthDestination(user));
                         String subject = "Action Required - Order #" + shortId;
 
@@ -218,7 +217,7 @@ public class NotificationService {
 
                         String shortId = orderId.length() >= 8 ? orderId.substring(orderId.length() - 8).toUpperCase()
                                         : orderId;
-                        Email from = new Email("it22061348@my.sliit.lk");
+                        Email from = new Email(senderEmail != null ? senderEmail : "it22061348@my.sliit.lk");
                         Email to = new Email(getAuthDestination(user));
                         String subject = "Receipt - Order #" + shortId;
 
