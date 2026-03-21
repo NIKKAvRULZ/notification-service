@@ -24,7 +24,7 @@ public class PaymentDTO {
     }
 
     public String getCurrency() {
-        return currency != null ? currency : "LKR";
+        return "LKR";
     }
 
     public void setCurrency(String currency) {
