@@ -57,6 +57,7 @@ public class NotificationController {
     // Ping endpoint for keep-alive (cron-job.org)
     @GetMapping("/ping")
     public ResponseEntity<String> ping() {
+        System.out.println(">>> PING RECEIVED: Health check handshake successful.");
         return ResponseEntity.ok("Service is awake!");
     }
 }
